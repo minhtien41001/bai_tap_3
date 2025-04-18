@@ -2,17 +2,17 @@ package com.example.book_service.controller;
 
 import com.example.book_service.entity.Book;
 import com.example.book_service.service.BookService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/books")
 public class BookController {
-    @Autowired
-    private BookService bookService;
+    private final BookService bookService;
 
     @GetMapping
     public ResponseEntity<List<Book>> getAllBooks() {

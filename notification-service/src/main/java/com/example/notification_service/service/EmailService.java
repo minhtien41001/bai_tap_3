@@ -1,19 +1,20 @@
 package com.example.notification_service.service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender javaMailSender;
+    private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
+
+    private final JavaMailSender javaMailSender;
 
     public void sendEmail(String to, String subject, String text) {
         try {
@@ -25,7 +26,7 @@ public class EmailService {
 
             javaMailSender.send(message);
         } catch (MailException e) {
-            e.printStackTrace();
+            logger.error("Gửi email thất bại tới {} với tiêu đề '{}'", to, subject, e);
         }
     }
 }
