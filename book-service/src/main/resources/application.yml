@@ -21,6 +21,11 @@ spring:
   cloud:
     compatibility-verifier:
       enabled: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8086/realms/book-management-realm
 eureka:
   client:
     service-url:
@@ -29,6 +34,3 @@ eureka:
     fetch-registry: true
   instance:
     prefer-ip-address: true
-jwt:
-  secret: daylakhoabaomatjwtcuatoitoiphaivietnhuthenaydedudodai
-  expiration: 86400000

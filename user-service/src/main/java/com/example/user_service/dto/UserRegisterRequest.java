@@ -9,5 +9,4 @@ public class UserRegisterRequest {
     private String password;
     private String email;
     private Role role;
-
 }

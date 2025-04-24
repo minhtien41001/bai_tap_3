@@ -4,46 +4,51 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.client.RestTemplate;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtUtil jwtUtil;
+    // Cho phép các endpoint public không qua xác thực
+    @Bean
+    public SecurityFilterChain publicEndpoints(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/users/register") // chỉ áp dụng cho endpoint này
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().permitAll()
+                )
+                .csrf(csrf -> csrf.disable());
 
-    public SecurityConfig(JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
+        return http.build();
     }
 
+    // Cho phần còn lại yêu cầu JWT
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain protectedEndpoints(HttpSecurity http) throws Exception {
         http
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/users/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/users/validate").permitAll()
-
-                        .requestMatchers(HttpMethod.GET, "/api/books").hasAnyRole("EMPLOYEE", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/books").hasAnyRole("EMPLOYEE", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/books/**").hasAnyRole("EMPLOYEE", "ADMIN")
-
-                        .requestMatchers(HttpMethod.DELETE, "/api/books/**").hasRole("ADMIN")
-                        .requestMatchers("/api/users/me").authenticated()
-                        .requestMatchers("/api/**").hasRole("ADMIN")
-
+                .authorizeHttpRequests(auth -> auth
                         .anyRequest().authenticated()
                 )
-                .csrf(csrf -> csrf.disable())
-                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()));
 
         return http.build();
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(10);
+    }
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 }

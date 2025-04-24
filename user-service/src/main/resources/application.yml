@@ -20,6 +20,11 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8086/realm/book-management-realm
 eureka:
   instance:
     prefer-ip-address: true
@@ -29,6 +34,13 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
 
-jwt:
-  secret: daylakhoabaomatjwtcuatoitoiphaivietnhuthenaydedudodai
-  expiration: 86400000
+#jwt:
+#  secret: daylakhoabaomatjwtcuatoitoiphaivietnhuthenaydedudodai
+#  expiration: 86400000
+
+keycloak:
+  realm: book-management-realm
+  auth-server-url: http://localhost:8086
+  resource: user-service
+  public-client: true
+  bearer-only: true

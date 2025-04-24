@@ -1,6 +1,5 @@
 package com.example.user_service.service;
 
-import com.example.user_service.config.JwtUtil;
 import com.example.user_service.dto.*;
 import com.example.user_service.entity.Role;
 import com.example.user_service.entity.User;
@@ -10,52 +9,55 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
-
 @Service
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
     private final KafkaProducer kafkaProducer;
+    private final KeycloakAdminClientService keycloakAdminClientService;
 
-    public AuthService(UserRepository userRepository, JwtUtil jwtUtil, PasswordEncoder passwordEncoder, KafkaProducer kafkaProducer) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, KafkaProducer kafkaProducer, KeycloakAdminClientService keycloakAdminClientService) {
         this.userRepository = userRepository;
-        this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
         this.kafkaProducer = kafkaProducer;
+        this.keycloakAdminClientService = keycloakAdminClientService;
     }
 
-    public User registerUser(String username, String password, String email, Role role) {
-        Role userRole;
-        userRole = Objects.requireNonNullElse(role, Role.EMPLOYEE);
+    /**
+     * Chức năng đăng ký user.
+     *
+     * @param username tên đăng nhập
+     * @param password mật khẩu
+     * @param email    email
+     * @param role    role
+     */
+    public void registerUser(String username, String password, String email, Role role) {
+        // Nếu không truyền role → mặc định EMPLOYEE
+        Role actualRole = (role != null) ? role : Role.EMPLOYEE;
 
+        // 1. Tạo user trên Keycloak và gán role
+        keycloakAdminClientService.createUser(username, email, password, actualRole.name());
+
+        // 2. Lưu user vào DB local
         User user = new User();
         user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(password));  // Mã hóa mật khẩu
+        user.setPassword(passwordEncoder.encode(password));
         user.setEmail(email);
-        user.setRole(userRole);  // Gán vai trò cho người dùng
+        user.setRole(actualRole); // nếu bạn lưu cả role ở DB local
+
         User savedUser = userRepository.save(user);
 
         kafkaProducer.sendUserRegisteredEvent(new UserRegisteredEvent(email));
 
-        return savedUser;
     }
 
-    public AuthResponse login(LoginRequest loginRequest) {
-        User user = userRepository.findByUsername(loginRequest.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("User not found!"));
 
-        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("Invalid credentials!");
-        }
-
-        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
-
-        return new AuthResponse(token);
-    }
-
+    /**
+     * Cập nhật thông tin user hiện tại.
+     * @param username tên đăng nhập
+     * @param request request chứa thông tin cập nhật
+     */
     public void updateCurrentUser(String username, UpdateProfileRequest request) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));

@@ -15,17 +15,15 @@ spring:
           uri: lb://BOOK-SERVICE
           predicates:
             - Path=/api/books/**
-          filters:
-            - name: AuthenticationFilter
         - id: notification-service
           uri: lb://NOTIFICATION-SERVICE
           predicates:
             - Path=/api/notifications/**
-#  security:
-#    oauth2:
-#      resourceserver:
-#        jwt:
-#          issuer-uri: http://localhost:8080
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8086/realm/book-management-realm
 eureka:
   client:
     service-url:

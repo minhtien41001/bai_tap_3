@@ -1,5 +1,9 @@
+networks:
+  my-local:
+
 volumes:
   volume1:
+  volume2:
 services:
   kafka1:
     image: 'bitnami/kafka:3.3.1'
@@ -39,11 +43,15 @@ services:
   postgres:
     image: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
+    volumes:
+      - volume2:/var/lib/postgresql/data
+    networks:
+      my-local:
 
   debezium:
     image: debezium/connect:3.0.0.Final
@@ -58,3 +66,21 @@ services:
       CONFIG_STORAGE_TOPIC: debezium_connect_configs
       OFFSET_STORAGE_TOPIC: debezium_connect_offsets
       STATUS_STORAGE_TOPIC: debezium_connect_status
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    container_name: keycloak
+    command: start-dev
+    ports:
+      - "8086:8080"
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/postgres
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: postgres
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    depends_on:
+      - postgres
+    networks:
+      my-local:
