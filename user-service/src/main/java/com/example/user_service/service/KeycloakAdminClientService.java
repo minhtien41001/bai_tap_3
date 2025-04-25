@@ -2,6 +2,7 @@ package com.example.user_service.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -16,12 +17,23 @@ public class KeycloakAdminClientService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
-    private static final String BASE_URL = "http://localhost:8086";
-    private static final String REALM = "book-management-realm";
-    private static final String CLIENT_ID = "user-service";
-    private static final String CLIENT_SECRET = "ynkrXJgeceDIow9jfIxyfjjr9oS0m6QE";
-    private static final String ADMIN_USERNAME = "admin-user";
-    private static final String ADMIN_PASSWORD = "admin";
+    @Value("${keycloak.base-url}")
+    private String baseUrl;
+
+    @Value("${keycloak.realm-book}")
+    private String realm;
+
+    @Value("${keycloak.client-id}")
+    private String clientId;
+
+    @Value("${keycloak.client-secret}")
+    private String clientSecret;
+
+    @Value("${keycloak.admin-username}")
+    private String adminUsername;
+
+    @Value("${keycloak.admin-password}")
+    private String adminPassword;
 
     public KeycloakAdminClientService(RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
@@ -29,17 +41,17 @@ public class KeycloakAdminClientService {
     }
 
     public String getAdminToken() {
-        String tokenUrl = BASE_URL + "/realms/" + REALM + "/protocol/openid-connect/token";
+        String tokenUrl = baseUrl + "/realms/" + realm + "/protocol/openid-connect/token";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("grant_type", "password");
-        formData.add("client_id", CLIENT_ID);
-        formData.add("client_secret", CLIENT_SECRET);
-        formData.add("username", ADMIN_USERNAME);
-        formData.add("password", ADMIN_PASSWORD);
+        formData.add("client_id", clientId);
+        formData.add("client_secret", clientSecret);
+        formData.add("username", adminUsername);
+        formData.add("password", adminPassword);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(formData, headers);
         ResponseEntity<String> response = restTemplate.postForEntity(tokenUrl, request, String.class);
@@ -60,7 +72,7 @@ public class KeycloakAdminClientService {
         String token = getAdminToken();
 
         // 1. Tạo user
-        String createUserUrl = BASE_URL + "/admin/realms/" + REALM + "/users";
+        String createUserUrl = baseUrl + "/admin/realms/" + realm + "/users";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(token);
@@ -96,7 +108,7 @@ public class KeycloakAdminClientService {
     }
 
     private String getUserIdByUsername(String username, String token) {
-        String url = BASE_URL + "/admin/realms/" + REALM + "/users?username=" + username;
+        String url = baseUrl + "/admin/realms/" + realm + "/users?username=" + username;
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
         HttpEntity<Void> request = new HttpEntity<>(headers);
@@ -117,14 +129,14 @@ public class KeycloakAdminClientService {
     }
 
     private void assignRealmRoleToUser(String userId, String roleName, String token) {
-        String url = BASE_URL + "/admin/realms/" + REALM + "/users/" + userId + "/role-mappings/realm";
+        String url = baseUrl + "/admin/realms/" + realm + "/users/" + userId + "/role-mappings/realm";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(token);
 
         // Lấy role representation
-        String roleUrl = BASE_URL + "/admin/realms/" + REALM + "/roles/" + roleName;
+        String roleUrl = baseUrl + "/admin/realms/" + realm + "/roles/" + roleName;
         HttpEntity<Void> roleRequest = new HttpEntity<>(headers);
         ResponseEntity<String> roleResponse = restTemplate.exchange(roleUrl, HttpMethod.GET, roleRequest, String.class);
 

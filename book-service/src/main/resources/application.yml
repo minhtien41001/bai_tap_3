@@ -26,6 +26,10 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8086/realms/book-management-realm
+  data:
+    redis:
+      host: localhost
+      port: 6379
 eureka:
   client:
     service-url:
@@ -34,3 +38,6 @@ eureka:
     fetch-registry: true
   instance:
     prefer-ip-address: true
+logging:
+  level:
+    org.springframework.data.redis: DEBUG

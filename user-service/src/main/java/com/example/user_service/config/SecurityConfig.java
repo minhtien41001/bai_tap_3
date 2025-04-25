@@ -21,7 +21,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain publicEndpoints(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/users/register") // chỉ áp dụng cho endpoint này
+                .securityMatcher("/api/users/register")
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll()
                 )

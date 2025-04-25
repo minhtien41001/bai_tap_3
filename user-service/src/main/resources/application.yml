@@ -39,8 +39,13 @@ eureka:
 #  expiration: 86400000
 
 keycloak:
-  realm: book-management-realm
   auth-server-url: http://localhost:8086
+  base-url: http://localhost:8086
+  realm-book: book-management-realm
   resource: user-service
-  public-client: true
+  client-id: user-service
+  client-secret: ynkrXJgeceDIow9jfIxyfjjr9oS0m6QE
+  admin-username: admin-user
+  admin-password: admin
+  public-client: false
   bearer-only: true
